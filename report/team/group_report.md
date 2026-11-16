@@ -12,16 +12,16 @@ Tối đa 5 trang ngoài phụ lục. Số liệu lấy từ file trong `src/rep
 
 Nhóm hiểu bài toán thế nào, chia việc ra sao, thứ tự làm bốn shape.
 
-- Phân công Shape B (`single` — Phạm Thị Hồng Ngọc): triển khai tác nhân đơn dùng vòng lặp ReAct giới hạn 8 bước, chỉ sử dụng tool đọc có cấu trúc và tách biệt hoàn toàn quyền tính tiền / ghi ledger về phía host.
+- Phần Shape B (`single` — Phạm Thị Hồng Ngọc): xây dựng một agent ReAct chạy tối đa 8 bước, chỉ dùng các tool đọc dữ liệu có cấu trúc trong DB và đẩy toàn bộ phần tính tiền, kiểm tra approval, chống ghi trùng về code và host (`durability.issue_refund`).
 
 ## 3. Giải pháp
 
 Mô tả ba shape nhóm viết (workflow, single, orchestrator): mỗi shape đọc gì, quyết định gì, gọi host ra sao. Chỉ rõ ranh giới code / model (tham khảo [docs/architecture.md](../../docs/architecture.md)), cách handoff được sanitize và trace ghi những event nào.
 
 ### Shape B — `single` (Single ReAct agent)
-- **Vòng lặp ReAct giới hạn:** sử dụng `lab8.runtime.run_react(conn, budget, observation={"claim_id": claim_id}, decide=decide, max_steps=8, worker=False)`. Mỗi lượt hàm `decide` gọi `mock_llm.complete(..., purpose="react", ...)` để đếm chi phí suy luận vào `Budget`, rồi chọn tuần tự 4 read tool: `get_claim_view` → `lookup_order` → `lookup_refund_history` → `compute_compensation`, gom kết quả qua closure `state` và dừng trước ngưỡng 8 bước.
-- **Ranh giới code / model:** `decide` không bao giờ gọi `issue_refund` (bị `runtime.dispatch` chặn bởi `WRITE_TOOLS`), không đọc/tin các con số hay chỉ thị trong `ticket`, và không tự tính hay trừ tiền bồi thường. Sau vòng lặp, code của shape kiểm tra `stopped == "step_cap"` hoặc các nhánh thoát sớm (`failed`, `needs_info`, `escalated`), đọc `amount_vnd` do `compute_compensation` tính: nếu `<= 0` thì trả `denied` không gọi host; nếu `> 0` thì truyền **quote đầy đủ** và `crash_at` vào `durability.issue_refund` (chỉ bắt `InjectedCrash` để ghi sự kiện `crash` và `raise` lại).
-- **Trace contract v1:** mọi nhánh trả về đều đi qua `done()` → `lab8.shapes.common.finish(...)`, ghi các event `claim` (`claim_id`, `has_order_id`), `lookup_order` (chỉ 7 field allowlist khi visible), `lookup_refund_history`, `quote`, `issue_refund`, `decision` và `crash`. Cố ý **không** ghi nguyên văn `ticket`, `parent_secret`, `raw_headers`, `phone`, `address`, `internal_note`, `item_name` vào trace hay stdout.
+- **Cách chạy vòng ReAct:** Dùng `lab8.runtime.run_react(conn, budget, observation={"claim_id": claim_id}, decide=decide, max_steps=8, worker=False)`. Do `run_react` chỉ trả kết quả của tool gần nhất, hàm `decide` gom dữ liệu vào dict `state` qua các bước tuần tự: `get_claim_view` → `lookup_order` → `lookup_refund_history` → `compute_compensation` (kết thúc ở bước 5, dưới ngưỡng 8 bước) và gọi `mock_llm.complete(..., purpose="react", ...)` ở mỗi bước để tính đủ chi phí model vào `Budget`.
+- **Ranh giới code / model:** Model trong `decide` không gọi write tool (runtime chặn `issue_refund` và `append_audit`), không đọc số ngày hay chỉ thị trong `ticket`, và không tự tính tiền. Sau vòng lặp, code của shape tự kiểm tra `step_cap` hoặc các nhánh thoát sớm (`failed`, `needs_info`, `escalated`), đọc `amount_vnd` từ `compute_compensation`: nếu `<= 0` thì trả `denied` (không gọi host); nếu `> 0` thì truyền **quote đầy đủ** (không tự trừ tiền đã hoàn từ `lookup_refund_history`) cùng `crash_at` vào `durability.issue_refund` để host trừ theo trần đơn và kiểm tra approval. Nếu gặp `InjectedCrash`, shape chỉ ghi event `crash` và `trace.write()` rồi `raise` lại.
+- **Trace contract v1:** Mọi nhánh return đều đi qua `done()` → `lab8.shapes.common.finish(...)`, ghi các event `claim` (`claim_id`, `has_order_id`), `lookup_order` (7 field allowlist khi `visible=True`), `lookup_refund_history`, `quote`, `issue_refund`, `decision` và `crash`. Trace cố ý không ghi nguyên văn `ticket`, `parent_secret`, `raw_headers`, `phone`, `address`, `internal_note`, `item_name`.
 
 ## 4. Kết quả
 
