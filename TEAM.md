@@ -27,7 +27,7 @@ Gợi ý chia vai:
 
 | Người | Vai | Commit | Test đã thêm hoặc sửa |
 | --- | --- | --- | --- |
-| | | | |
+| Mai Lâm Tấn Đạt | workflow + integration | 9c18c0b | test_workflow_extra.py |
 
 ## Cá nhân
 
@@ -40,6 +40,22 @@ report/team/MSSV_HoTen.md
 Ví dụ: `report/team/20241234_NguyenVanAn.md`.
 
 Sao chép mục dưới đây cho từng thành viên.
+
+## 2A202603645_MaiLamTanDat
+
+### Phần việc phụ trách
+
+- Trưởng nhóm (Leader), phụ trách Shape A (`src/lab8/shapes/workflow.py`), điều phối và tích hợp nhóm.
+
+### Đóng góp cụ thể
+
+- Cài đặt Shape A (`workflow.py`) dạng deterministic workflow, chi phí 0 token, đạt 100% pass rate.
+- Viết test kiểm chứng `src/tests/test_workflow_extra.py` (C-002 denied ở cả 5 seeds).
+- Commit: `9c18c0b`.
+
+### Bằng chứng
+
+- Chi tiết xem tại báo cáo cá nhân: [report/team/2A202603645_MaiLamTanDat.md](report/team/2A202603645_MaiLamTanDat.md)
 
 ## MSSV_HoTen
 
