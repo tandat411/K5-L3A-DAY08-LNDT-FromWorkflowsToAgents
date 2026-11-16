@@ -18,8 +18,16 @@ ones. `lab8.trace.Trace` does this; your own tracer is fine if it matches.
 
 from __future__ import annotations
 
-from lab8.schemas import RunResult
-from lab8.shapes.common import not_implemented
+import sqlite3
+
+from lab8.db import connect
+from lab8.durability import InjectedCrash, issue_refund
+from lab8.handoff import make_handoff
+from lab8.runtime import run_readonly_investigators
+from lab8.schemas import Budget, RunResult, make_run_id
+from lab8.shapes.common import finish, safe_dump
+from lab8.tools import compute_compensation, get_claim_view, tool_cost
+from lab8.trace import Trace
 
 
 def run_claim(
@@ -29,7 +37,137 @@ def run_claim(
     store_path: str,
     crash_at: str | None = None,
 ) -> RunResult:
-    # TODO CP2 (student): thay stub này bằng shape orchestrator theo các bước ở docstring đầu file.
-    # TODO CP3 (student): truyền crash_at vào durability.issue_refund, không bắt InjectedCrash.
-    del store_path, crash_at
-    return not_implemented("orchestrator", claim_id, seed)
+    conn = connect(store_path)
+    try:
+        return _run(conn, claim_id, seed=seed, crash_at=crash_at)
+    finally:
+        conn.close()
+
+
+def _run(conn: sqlite3.Connection, claim_id: str, *, seed: int, crash_at: str | None) -> RunResult:
+    budget = Budget()
+    run_id = make_run_id("orchestrator", claim_id, seed)
+    trace = Trace(run_id)
+
+    # Đọc claim
+    budget.add_tool(tool_cost())
+    claim_row = conn.execute(
+        "SELECT claim_id, principal_id, order_id, ticket FROM claims WHERE claim_id = ?",
+        (claim_id,),
+    ).fetchone()
+
+    if claim_row is None:
+        trace.add("error", {"reason": "unknown_claim"})
+        return finish(
+            conn,
+            shape="orchestrator",
+            claim_id=claim_id,
+            seed=seed,
+            status="failed",
+            proposal_amount=0,
+            budget=budget,
+            trace=trace,
+            error_reason="unknown_claim",
+        )
+
+    if not claim_row["order_id"]:
+        trace.add("decision", {"status": "needs_info"})
+        return finish(
+            conn,
+            shape="orchestrator",
+            claim_id=claim_id,
+            seed=seed,
+            status="needs_info",
+            proposal_amount=0,
+            budget=budget,
+            trace=trace,
+            error_reason="missing_order_id",
+        )
+
+    # Bước 1: Dựng handoff — chỉ allowlist fields, không truyền parent context
+    handoff = make_handoff(
+        request_id=f"REQ-{claim_id}",
+        claim_id=claim_id,
+        task="investigate_claim",
+        facts={},
+        allowed_tools=["lookup_order", "lookup_refund_history", "compute_compensation"],
+    )
+    # Bước 4: Trace handoff đã sanitize, không phải context gốc
+    trace.add("handoff", safe_dump(handoff))
+
+    # Bước 2: Chạy investigator (read-only)
+    investigated = run_readonly_investigators(
+        conn, budget, handoff, principal_id=claim_row["principal_id"]
+    )
+
+    order_view = investigated["tools"].get("lookup_order", {})
+    trace.add("investigator", {
+        "lookup_order": {"visible": order_view.get("visible")},
+        "refund_history": investigated["tools"].get("lookup_refund_history"),
+    })
+
+    if not order_view.get("visible"):
+        return finish(
+            conn,
+            shape="orchestrator",
+            claim_id=claim_id,
+            seed=seed,
+            status="escalated",
+            proposal_amount=0,
+            budget=budget,
+            trace=trace,
+            error_reason=order_view.get("reason"),
+        )
+
+    # Bước 3: Lấy quote từ investigator, orchestrator gọi issue_refund
+    quote_payload = investigated["tools"].get("compute_compensation")
+    if not quote_payload:
+        # fallback nếu investigator chưa chạy compute_compensation
+        order = order_view.get("order", {})
+        budget.add_tool(tool_cost())
+        quote_payload = compute_compensation(conn, order)
+
+    trace.add("quote", quote_payload)
+    proposal_amount = int(quote_payload.get("amount_vnd", 0))
+
+    if proposal_amount <= 0:
+        return finish(
+            conn,
+            shape="orchestrator",
+            claim_id=claim_id,
+            seed=seed,
+            status="denied",
+            proposal_amount=0,
+            budget=budget,
+            trace=trace,
+            error_reason=quote_payload.get("reason"),
+        )
+
+    # TODO CP3: truyền crash_at vào issue_refund, không bắt InjectedCrash
+    outcome = issue_refund(conn, claim_id, proposal_amount, crash_at=crash_at)
+
+    if not outcome["ok"]:
+        status = "failed" if outcome["conflict"] else "denied"
+        return finish(
+            conn,
+            shape="orchestrator",
+            claim_id=claim_id,
+            seed=seed,
+            status=status,
+            proposal_amount=proposal_amount,
+            budget=budget,
+            trace=trace,
+            error_reason=outcome["reason"],
+        )
+
+    return finish(
+        conn,
+        shape="orchestrator",
+        claim_id=claim_id,
+        seed=seed,
+        status="resolved",
+        proposal_amount=proposal_amount,
+        budget=budget,
+        trace=trace,
+        error_reason=None,
+    )

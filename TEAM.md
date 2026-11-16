@@ -13,8 +13,8 @@
 | --: | ------ | ---- | ----- | ------ | ------- |
 |   1 | Mai Lâm Tấn Đạt | 2A202603645 | 26ai.datmlt@vinuni.edu.vn | https://github.com/tandat411 | Trưởng nhóm |
 |   2 | Phạm Thị Hồng Ngọc | 2A202603602 | | https://github.com/ngoc11224756 | Thành viên |
-|   3 | Nguyễn Thuỳ Lam | 2A202603632 | | https://github.com/ThuyLam4719 | Thành viên |
-|   4 | Nguyễn Trần Tú Trân | 2A202603603 | | https://github.com/trannguyentran | Thành viên |
+|   3 | Nguyễn Thuỳ Lam | 2A202603632 | 26ai.lamnt5@vinuni.edu.vn | https://github.com/ThuyLam4719 | Thành viên |
+|   4 | Nguyễn Trần Tú Trân | 2A202603603 | 26ai.tranntt@vinuni.edu.vn | https://github.com/trannguyentran | Thành viên |
 
 Gợi ý chia vai:
 
