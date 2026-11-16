@@ -27,7 +27,7 @@ Gợi ý chia vai:
 
 | Người | Vai | Commit | Test đã thêm hoặc sửa |
 | --- | --- | --- | --- |
-| | | | |
+| Nguyễn Trần Tú Trân | Ledger, crash, evaluation; tích hợp ba shape | 41728aa (3 shape, crash test, benchmark, crash suite), 5d0719b (test nền tảng), f105423 (hướng dẫn nhóm) | `src/tests/test_ticket_is_data.py`, `src/tests/test_crash_shapes.py` |
 
 ## Cá nhân
 
