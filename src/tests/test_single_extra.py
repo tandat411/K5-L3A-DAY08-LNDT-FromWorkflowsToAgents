@@ -1,4 +1,4 @@
-"""Unit tests for Shape B (single ReAct agent) per HUONG_DAN_NHOM.md."""
+"""Unit tests for Shape B (single ReAct agent) """
 
 from __future__ import annotations
 
