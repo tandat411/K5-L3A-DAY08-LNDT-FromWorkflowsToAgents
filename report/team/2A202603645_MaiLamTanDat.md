@@ -6,10 +6,10 @@ Ví dụ: `20241234_NguyenVanAn.md`.
 
 ## 1. Thông tin thành viên
 
-- Họ tên:
-- MSSV:
-- Email:
-- GitHub:
+- Họ tên: Mai Lâm Tấn Đạt
+- MSSV: 2A202603645
+- Email: 26ai.datmlt@vinuni.edu.vn
+- GitHub: https://github.com/tandat411
 
 ## 2. Phần việc phụ trách
 

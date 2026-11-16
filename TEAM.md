@@ -2,17 +2,19 @@
 
 ## Thông tin nhóm
 
-- Tên nhóm:
+- Tên nhóm: LNDT
 - Lớp: L3A
-- Repo nhóm: `K5-L3A-DAY08-TenNhom-FromWorkflowsToAgents` (xem [SUBMISSION.md](SUBMISSION.md))
-- URL repo, nhánh nộp, commit chốt:
+- Repo nhóm: `K5-L3A-DAY08-LNDT-FromWorkflowsToAgents` (xem [SUBMISSION.md](SUBMISSION.md))
+- URL repo, nhánh nộp, commit chốt: https://github.com/tandat411/K5-L3A-DAY08-LNDT-FromWorkflowsToAgents
 
 ## Thành viên
 
 | STT | Họ tên | MSSV | Email | GitHub | Vai trò |
 | --: | ------ | ---- | ----- | ------ | ------- |
-|   1 |        |      |       |        |         |
-|   2 |        |      |       |        |         |
+|   1 | Mai Lâm Tấn Đạt | 2A202603645 | 26ai.datmlt@vinuni.edu.vn | https://github.com/tandat411 | Trưởng nhóm |
+|   2 | Phạm Thị Hồng Ngọc | 2A202603602 | | https://github.com/ngoc11224756 | Thành viên |
+|   3 | Nguyễn Thuỳ Lam | 2A202603632 | | https://github.com/ThuyLam4719 | Thành viên |
+|   4 | Nguyễn Trần Tú Trân | 2A202603603 | | https://github.com/trannguyentran | Thành viên |
 
 Gợi ý chia vai:
 
