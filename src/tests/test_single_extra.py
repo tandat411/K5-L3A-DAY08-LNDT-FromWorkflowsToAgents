@@ -7,8 +7,10 @@ from pathlib import Path
 
 import pytest
 
+from lab8 import runtime
 from lab8.db import connect, init_store
 from lab8.durability import InjectedCrash, committed_audit_count, get_refund
+from lab8.handoff import READONLY_TOOLS, WRITE_TOOLS
 from lab8.metrics import check_trace, trial_pass
 from lab8.runtime import ToolRejected, dispatch
 from lab8.schemas import Budget
@@ -33,7 +35,28 @@ def test_single_stops_within_8_steps_and_counts_model_calls(public_db):
     assert ok, reason
 
 
-def test_single_never_calls_write_tool_in_react(public_db):
+def test_single_never_calls_write_tool_in_react(public_db, monkeypatch):
+    called_tools: list[str] = []
+    real_dispatch = runtime.dispatch
+
+    def spy_dispatch(conn, budget, name, args, *, worker):
+        called_tools.append(name)
+        return real_dispatch(conn, budget, name, args, worker=worker)
+
+    monkeypatch.setattr(runtime, "dispatch", spy_dispatch)
+    res_ok = run_claim("C-001", seed=11, store_path=str(public_db))
+    assert res_ok.status == "resolved"
+    assert called_tools == [
+        "get_claim_view",
+        "lookup_order",
+        "lookup_refund_history",
+        "compute_compensation",
+    ]
+    assert set(called_tools) <= READONLY_TOOLS
+    assert not (set(called_tools) & WRITE_TOOLS)
+    assert len(called_tools) <= 8
+
+    monkeypatch.undo()
     conn = connect(public_db)
     try:
         with pytest.raises(ToolRejected):
