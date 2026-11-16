@@ -9,7 +9,7 @@
 
 ## 2. Phần việc phụ trách
 
-Theo phân công trong `HUONG_DAN_NHOM.md`, mình phụ trách **Shape B (`single` — Single ReAct agent)**:
+Theo phân công của nhóm, mình phụ trách **Shape B (`single` — Single ReAct agent)**:
 - Viết hàm `run_claim` trong `src/lab8/shapes/single.py` theo vòng lặp ReAct giới hạn 8 bước.
 - Viết bộ test riêng `src/tests/test_single_extra.py` và kiểm tra toàn bộ 62 test của shape `single` trong ma trận student.
 - Cập nhật phần đóng góp của mình vào `TEAM.md` và phần mô tả Shape B trong `report/team/group_report.md`.
@@ -48,4 +48,4 @@ Mình triển khai `src/lab8/shapes/single.py` dựa trên `lab8.runtime.run_rea
 
 ## 6. Tự đánh giá
 
-- Mình đã làm xong đúng phần Shape B (`single`) và các test, báo cáo thuộc phạm vi của mình theo `HUONG_DAN_NHOM.md`, giữ nguyên các file của thành viên khác và không sửa các file thước đo của đề bài.
+- Mình đã làm xong đúng phần Shape B (`single`) và các test, báo cáo được phân công, giữ nguyên các file của thành viên khác và không sửa các file thước đo của đề bài.
