@@ -4,7 +4,7 @@
 
 - Họ tên: Phạm Thị Hồng Ngọc
 - MSSV: 2A202603602
-- Email: 
+- Email: 26ai.ngocpth@vinuni.edu.vn
 - GitHub: https://github.com/ngoc11224756
 
 ## 2. Phần việc phụ trách
