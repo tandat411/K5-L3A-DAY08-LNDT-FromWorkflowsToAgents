@@ -25,6 +25,10 @@ The model must not choose the refund amount and must not commit the refund.
 Trace contract v1 (docs/contracts.md): return a trace_path to a JSON file written in this run,
 {"run_id": <same run_id>, "events": [...]}, on every return path including early
 ones. `lab8.trace.Trace` does this; your own tracer is fine if it matches.
+
+Ranh giới trong shape này: mọi quyết định là code cố định. Model chỉ được gọi một
+lần cuối để soạn câu trả lời khách, prompt không chứa ticket, kết quả không dùng vào
+quyết định. Trace chỉ ghi view đã allowlist, không ghi ticket, claim row hay order row thô.
 """
 
 from __future__ import annotations

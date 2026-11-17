@@ -16,6 +16,14 @@ Caps: stop at 8 steps. Count model calls in the Budget so cost stays comparable.
 Trace contract v1 (docs/contracts.md): return a trace_path to a JSON file written in this run,
 {"run_id": <same run_id>, "events": [...]}, on every return path including early
 ones. `lab8.trace.Trace` does this; your own tracer is fine if it matches.
+
+Ranh giới code / model trong shape này:
+
+- Model (MockLLM, gọi trong `decide`) chỉ chọn tool ĐỌC tiếp theo, hoặc dừng.
+  Model không thấy ticket, không trả số tiền, không có tool ghi.
+- Số tiền là `amount_vnd` do `compute_compensation` tính từ dòng order.
+- Sau vòng lặp, code của shape gọi `durability.issue_refund` với quote đầy đủ.
+- Trace chỉ ghi kết quả tool đã qua allowlist; không ghi ticket, claim row hay order row thô.
 """
 
 from __future__ import annotations

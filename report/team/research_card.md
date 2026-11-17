@@ -17,21 +17,28 @@ Phần này nối tiếp phần mini research ở buổi lý thuyết (slide 62�
 
 | Field | Hướng dẫn | Nhóm điền |
 | --- | --- | --- |
-| CÂU | R1 / R2 / R3 / R4 | R1 |
-| SOURCE | Paper/blog, năm, URL, loại bằng chứng (benchmark, production report, blog kinh nghiệm) | Google Research 2026, *Towards a Science of Scaling Agent Systems*, benchmark trên nhiều task agent; loại bằng chứng: benchmark |
-| CLAIM | Một kết luận gốc của nguồn. Không viết rộng hơn phạm vi paper | Thêm agent song song chỉ cải thiện hiệu suất trên các task có subtask độc lập; với task tuần tự, scaling số agent làm tăng cost mà không tăng pass rate |
-| BOUNDARY | Model / dataset / setup giới hạn kết luận đó | Kết luận này được đo trên các LLM thực tế với task có cấu trúc rõ ràng; không áp dụng trực tiếp cho MockLLM hoặc môi trường mô phỏng |
-| HYPOTHESIS | Nếu đổi shape A→B (hoặc bật/tắt một thành phần), metric X sẽ đổi theo hướng nào, khoảng bao nhiêu | Nếu đổi workflow (không có investigator) sang orchestrator (thêm 1 investigator), pass rate sẽ giữ nguyên (~1.000) vì task xử lý claim là tuần tự (lookup_order → compute_compensation → issue_refund), nhưng cost/success sẽ tăng ~40–70% do overhead handoff và tool call bổ sung |
-| METHOD | Biến giữ cố định: model, tools, seed, corpus, giá, evaluator. Biến duy nhất được thay đổi: … | Giữ cố định: MockLLM, tools (lookup_order, compute_compensation, issue_refund), seeds (11,22,33,44,55), corpus (14 public claims), pricing (config/pricing.yaml), evaluator. Biến thay đổi duy nhất: topology — workflow (không có investigator) vs orchestrator (có investigator) |
-| FAILURE / METRIC | Một lỗi dự kiến và cách đo nó: pass rate, pass^5, variance, cost/success, leak, bypass | Lỗi dự kiến: orchestrator có thể fail thêm nếu handoff bị từ chối do allowlist sai. Đo bằng pass rate và cost/success từ `benchmark.json`. Lỗi phụ: secret leak qua handoff nếu facts chứa field ngoài allowlist — đo bằng secret_leakage trong grader |
+| CÂU | R1 / R2 / R3 / R4 | R2 · Failure taxonomy: trial fail của swarm ở seed 55 thuộc nhóm lỗi nào của MAST, và bỏ đúng nhóm lỗi đó thì metric đổi ra sao |
+| SOURCE | Paper/blog, năm, URL, loại bằng chứng (benchmark, production report, blog kinh nghiệm) | Cemri và cộng sự, *Why Do Multi-Agent LLM Systems Fail?* (MAST), NeurIPS 2025, https://arxiv.org/abs/2503.13657. Loại bằng chứng: taxonomy thực nghiệm, xây bằng gán nhãn tay trên trace của các hệ multi-agent |
+| CLAIM | Một kết luận gốc của nguồn. Không viết rộng hơn phạm vi paper | Lỗi của hệ multi-agent gom được vào 14 failure mode thuộc 3 nhóm: thiết kế hệ thống, lệch pha giữa các agent, và kiểm chứng tác vụ. Taxonomy được gán nhãn tay với độ đồng thuận κ = 0,88 |
+| BOUNDARY | Model / dataset / setup giới hạn kết luận đó | Trace lấy từ các framework multi-agent mã nguồn mở chạy LLM thật trên task như lập trình, toán, hỏi đáp. Paper mô tả lỗi xảy ra ở đâu, không đo tần suất trên MockLLM cố định theo seed, và không xét trường hợp có host bằng code chặn ghi như LogiX |
+| HYPOTHESIS | Nếu đổi shape A→B (hoặc bật/tắt một thành phần), metric X sẽ đổi theo hướng nào, khoảng bao nhiêu | Lỗi R-swarm-C-002-s55 thuộc nhóm kiểm chứng tác vụ: swarm nhận số ngày trễ khách viết trong ticket mà không đối chiếu với dòng order. Nếu thay swarm bằng orchestrator (quote thẳng từ order, không có bước tin ticket) thì pass rate tăng từ 0,986 lên 1,0, pass^5 từ 0,929 lên 1,0, seed variance từ 0,000816 về 0, và cost/success giảm vì bớt 2 lần gọi model (peer, parse) mỗi trial |
+| METHOD | Biến giữ cố định: model, tools, seed, corpus, giá, evaluator. Biến duy nhất được thay đổi: … | Cố định: MockLLM, tool đọc và host, seed 11,22,33,44,55, 14 claim public, `config/pricing.yaml`, `lab8.metrics`, `as_of` 2026-11-15, mỗi trial một SQLite mới. Biến thay đổi: có hay không bước để model đè dữ kiện order bằng chữ trong ticket (swarm có, orchestrator không). Nhiễu đã biết: swarm còn thêm 2 lần gọi model nên chênh cost không quy hết cho bước kiểm chứng; chênh pass rate thì có |
+| FAILURE / METRIC | Một lỗi dự kiến và cách đo nó: pass rate, pass^5, variance, cost/success, leak, bypass | Lỗi dự kiến: refund cho claim lẽ ra bị từ chối vì tin số trong ticket (C-002: ticket ghi trễ 5 ngày, order ghi 2 ngày). Đo bằng pass rate, pass^5, seed min-max, seed variance và cost/success theo shape trong `reports/benchmark.json`; đọc trace để thấy event `model_override` |
 
 ## Kết quả ablation
 
-- Lệnh đã chạy (copy nguyên văn):
-  `python -m lab8.benchmark --shapes workflow,orchestrator --cases data/public_claims.jsonl --seeds 11,22,33,44,55 --out reports/benchmark.json`
-- Run id / file report: R-workflow-C-001-s11 / src/reports/benchmark.json
-- Kết quả so với hypothesis (**đúng**), kèm số liệu:
-  - workflow: pass_rate=1.000, pass^5=1.000, variance=0.000, cost/success=27.86 VND
-  - orchestrator: pass_rate=1.000, pass^5=1.000, variance=0.000, cost/success=46.43 VND
-  - Chênh lệch cost: +66.6% (27.86 → 46.43). Pass rate không đổi. Xác nhận hypothesis: task xử lý claim là tuần tự, thêm investigator không tăng pass rate mà chỉ tăng cost đáng kể.
-- Giới hạn: MockLLM không phải model sản xuất, latency là `unavailable`. Với LLM thực tế, investigator có thể giúp xử lý edge case mà MockLLM không mô phỏng được. Kết luận chỉ có giá trị trong setup lab này.
+- Lệnh đã chạy (copy nguyên văn): `python -m lab8.benchmark --shapes workflow,single,orchestrator,swarm --cases data/public_claims.jsonl --seeds 11,22,33,44,55 --out reports/benchmark.json` (so `by_shape.swarm` với `by_shape.orchestrator` trong cùng file).
+- Run id / file report: `R-swarm-C-002-s55` (trial fail duy nhất của swarm), `R-orchestrator-C-002-s55` (trial đối chứng); `src/reports/benchmark.json`.
+- Kết quả so với hypothesis (đúng / sai / không kết luận được), kèm số liệu: ĐÚNG trên bộ public. Từ `src/reports/benchmark.json` (14 claim × 5 seed = 70 trial mỗi shape):
+
+  | Shape | Pass rate | Pass^5 | Seed min–max | Variance | Cost/success (VND mô phỏng) | Model call / trial |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | swarm (có bước tin ticket) | 0.986 | 0.929 | 0.929–1.000 | 0.000816 | 49.57 | 3.00 |
+  | orchestrator (không có) | 1.000 | 1.000 | 1.000–1.000 | 0.000000 | 47.91 | 1.86 |
+
+  Pass rate, pass^5 và variance đổi đúng hướng và đúng độ lớn dự đoán; trial fail duy nhất là `R-swarm-C-002-s55` (`status resolved != denied`), còn `R-orchestrator-C-002-s55` pass. Trace của trial swarm cho thấy investigator đọc đúng `delay_days: 2`, sau đó event `model_override` đổi thành 5 và quote ra 20.000. Cost/success giảm 3,3%, nhỏ hơn mức "bớt 2 lần gọi model" gợi ý, vì orchestrator thêm lần gọi `plan` và gọi tool `lookup_refund_history`; phần chênh cost vì vậy không quy được cho bước kiểm chứng.
+- Bổ sung trên `student_drop/` (40 claim × 5 seed, nhãn viết tay, `src/scripts/doi_chieu_hidden.py` → `src/reports/hidden_doi_chieu.json`, không phải điểm chính thức): swarm 0.970 / pass^5 0.850, orchestrator 1.000 / 1.000. Cả 6 trial fail của swarm đều ở seed 55 và cùng một kiểu lỗi (tin số ngày trong ticket): 5 ca hoàn sai, 1 ca từ chối sai (C-H40, ticket nói ít hơn thực tế). Kết quả này ủng hộ hypothesis trên bộ lớn hơn, nhưng vẫn chỉ có một nhóm lỗi MAST xuất hiện vì lỗi của swarm là lỗi cài cố ý.
+- Phân loại: lỗi nằm ở bước kiểm chứng (dữ kiện dùng để quote không được kiểm lại với nguồn có cấu trúc). Cũng có thể đọc là lệch pha giữa các agent, vì bước sau bỏ qua kết quả investigator đã trả. Nhóm chọn nhóm kiểm chứng vì cách sửa đúng là thêm bước đối chiếu trước khi ghi, không phải đổi cách các agent trao đổi.
+- Giới hạn: MockLLM không phải model sản xuất, latency là `unavailable`. Lỗi của swarm là lỗi cài cố ý theo seed (`seed % 5 == 0`), không phải lỗi tự phát của model; chỉ 1 trial fail nên không đủ để nói về tần suất các nhóm lỗi MAST.
+
+Muốn đi xa hơn một ablation để lấy điểm cộng thì xem [docs/bonus_topics.md](../../docs/bonus_topics.md).

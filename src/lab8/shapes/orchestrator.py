@@ -14,6 +14,14 @@ An LLM summary of the parent context is not a sanitizer. Use the allowlist.
 Trace contract v1 (docs/contracts.md): return a trace_path to a JSON file written in this run,
 {"run_id": <same run_id>, "events": [...]}, on every return path including early
 ones. `lab8.trace.Trace` does this; your own tracer is fine if it matches.
+
+Ranh giới trong shape này:
+
+- Orchestrator (code) đọc claim qua `get_claim_view`, lập handoff bằng allowlist,
+  nhận kết quả investigator, gọi `durability.issue_refund`. Chỉ orchestrator ghi.
+- Investigator chỉ có tool đọc (`worker=True`), chỉ thấy handoff đã sanitize.
+- Model (MockLLM) chỉ lập kế hoạch và soạn câu trả lời; không thấy ticket, không quyết tiền.
+- Không có bước nào để chữ trong ticket đè dữ kiện order (khác swarm tham chiếu).
 """
 
 from __future__ import annotations

@@ -14,7 +14,7 @@
 |   1 | Mai Lâm Tấn Đạt | 2A202603645 | 26ai.datmlt@vinuni.edu.vn | https://github.com/tandat411 | Trưởng nhóm |
 |   2 | Phạm Thị Hồng Ngọc | 2A202603602 | 26ai.ngocpth@vinuni.edu.vn | https://github.com/ngoc11224756 | Thành viên — Single agent (B) |
 |   3 | Nguyễn Thuỳ Lam | 2A202603632 | 26ai.lamnt5@vinuni.edu.vn | https://github.com/ThuyLam4719 | Thành viên |
-|   4 | Nguyễn Trần Tú Trân | 2A202603603 | 26ai.tranntt@vinuni.edu.vn | https://github.com/trannguyentran | Thành viên |
+|   4 | Nguyễn Trần Tú Trân | 2A202603603 | 26ai.tranntt@vinuni.edu.vn | https://github.com/trannguyentran1997 | Thành viên |
 
 Gợi ý chia vai:
 
@@ -29,6 +29,7 @@ Gợi ý chia vai:
 | --- | --- | --- | --- |
 | Mai Lâm Tấn Đạt | workflow + integration | 9c18c0b | test_workflow_extra.py |
 | Phạm Thị Hồng Ngọc (2A202603602) | Single agent (B) | `2b11cda`, `ebcf04a` (`feat(single)`, `test(single)`) | `src/tests/test_single_extra.py` |
+| Nguyễn Trần Tú Trân | Ledger, crash, evaluation; tích hợp ba shape | 41728aa (3 shape, crash test, benchmark, crash suite), 5d0719b (test nền tảng), f105423 (hướng dẫn nhóm) | `src/tests/test_ticket_is_data.py`, `src/tests/test_crash_shapes.py` |
 
 ## Cá nhân
 
