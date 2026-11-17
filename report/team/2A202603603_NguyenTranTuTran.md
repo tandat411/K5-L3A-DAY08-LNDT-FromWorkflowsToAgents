@@ -1,4 +1,4 @@
-# Báo cáo cá nhân — MSSV_HoTen
+# Báo cáo cá nhân — 2A202603603_Nguyễn Trần Tú Trân
 
 Đổi tên file theo quy tắc `MSSV_HoTen.md`.
 
