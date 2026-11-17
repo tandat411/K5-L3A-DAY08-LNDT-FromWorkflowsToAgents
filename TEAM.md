@@ -27,8 +27,9 @@ Gợi ý chia vai:
 
 | Người | Vai | Commit | Test đã thêm hoặc sửa |
 | --- | --- | --- | --- |
-| Mai Lâm Tấn Đạt | workflow + integration | 9c18c0b | test_workflow_extra.py |
+| Mai Lâm Tấn Đạt | workflow + integration | `9c18c0b` | test_workflow_extra.py |
 | Phạm Thị Hồng Ngọc (2A202603602) | Single agent (B) | `2b11cda`, `ebcf04a` (`feat(single)`, `test(single)`) | `src/tests/test_single_extra.py` |
+| Nguyễn Thuỳ Lam (2A202603632) | Orchestrator + handoff (C) | `94cb1d4` | `src/tests/test_orchestrator_extra.py` |
 | Nguyễn Trần Tú Trân | Ledger, crash, evaluation; tích hợp ba shape | 41728aa (3 shape, crash test, benchmark, crash suite), 5d0719b (test nền tảng), f105423 (hướng dẫn nhóm) | `src/tests/test_ticket_is_data.py`, `src/tests/test_crash_shapes.py` |
 
 ## Cá nhân
@@ -59,19 +60,36 @@ Sao chép mục dưới đây cho từng thành viên.
 
 - Chi tiết xem tại báo cáo cá nhân: [report/team/2A202603645_MaiLamTanDat.md](report/team/2A202603645_MaiLamTanDat.md)
 
-## MSSV_HoTen
+## 2A202603632_NguyenThuyLam
 
 ### Phần việc phụ trách
 
--
+- Phụ trách Shape C (`src/lab8/shapes/orchestrator.py`): Orchestrator + handoff cho investigator chỉ đọc.
 
 ### Đóng góp cụ thể
 
--
+- Dựng handoff chỉ chứa allowlist field, cấp 3 read-only tools (`lookup_order`, `lookup_refund_history`, `compute_compensation`), loại bỏ `parent_secret` và `raw_headers`.
+- Đảm bảo ranh giới tính tiền bằng code, truyền full quote vào `durability.issue_refund`, không nuốt `InjectedCrash`.
+- Viết test `src/tests/test_orchestrator_extra.py` (20 passed). Commit: `94cb1d4`.
 
 ### Bằng chứng
 
--
+- Chi tiết xem tại báo cáo cá nhân: [report/team/2A202603632_NguyenThuyLam.md](report/team/2A202603632_NguyenThuyLam.md)
+
+## 2A202603603_NguyenTranTuTran
+
+### Phần việc phụ trách
+
+- Phụ trách Ledger, crash test, evaluation, benchmark 4 shape, research card và tích hợp hệ thống.
+
+### Đóng góp cụ thể
+
+- Viết `test_ticket_is_data.py` (commit `5d0719b`), `test_crash_shapes.py` (commit `41728aa`), chạy bộ crash suite 20/20 (`reports/crash.json`) và benchmark 4 shape (`reports/benchmark.json`).
+- Viết phiếu nghiên cứu R2 (MAST) trong `research_card.md` và tự kiểm tra bộ hidden `student_drop/`.
+
+### Bằng chứng
+
+- Chi tiết xem tại báo cáo cá nhân: [report/team/2A202603603_NguyenTranTuTran.md](report/team/2A202603603_NguyenTranTuTran.md)
 
 ## 2A202603602_PhamThiHongNgoc
 

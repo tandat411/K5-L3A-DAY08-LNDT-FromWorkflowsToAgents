@@ -25,8 +25,8 @@ Em phụ trách **Shape C — Orchestrator + handoff** trong [orchestrator.py](.
 | --- | --- |
 | Ma trận kiểm thử Shape C | `62 passed` khi chạy lại trên bản mã nguồn dùng cho báo cáo. [Ma trận test public](../../src/tests/test_public_matrix.py) bao gồm `test_t11_retry_keeps_one_refund` và `test_t12_crash_before_checkpoint_does_not_double_pay`. |
 | Benchmark public | `70/70` trial đạt trên 14 claim × 5 seed. Pass rate và pass^5 đều `1.000`, seed variance `0`, chi phí mô phỏng `46,43 VND` trên mỗi trial đạt, số bước trung bình `2,79`, p95 `3`, số lần gọi model trung bình `0`. Run ID minh họa `R-orchestrator-C-001-s11`. [Kết quả benchmark](../../src/reports/benchmark.json) |
-| Commit kỹ thuật cá nhân | `[Điền hash và link commit do ThuyLam4719 đứng tên sau khi đẩy lên GitHub]` |
-| Test cá nhân theo C8 | `[Điền tên hàm test thực tế trong src/tests/test_orchestrator_extra.py và kết quả chạy]`. Phạm vi được phân công là đọc trace của `C-001` đến `C-014`, kiểm tra ba chuỗi `CANARY_SECRET_`, `parent_secret`, `raw_headers` đều vắng mặt, và xác nhận các handoff được tạo chỉ cấp công cụ đọc. |
+| Commit kỹ thuật cá nhân | `94cb1d4` (`lam`): hoàn thiện [orchestrator.py](../../src/lab8/shapes/orchestrator.py) trên nhánh `feature/nguyenthuylam-2A202603632`. |
+| Test cá nhân theo C8 | [src/tests/test_orchestrator_extra.py](../../src/tests/test_orchestrator_extra.py) (`20 passed`). Kiểm tra `test_orchestrator_handoff_only_contains_readonly_tools` (chỉ cấp tool đọc, không lộ parent secret), `test_orchestrator_trace_clean_of_secrets` trên cả 14 claims (không chứa `CANARY_SECRET_`, `parent_secret`, `raw_headers`), và `test_orchestrator_ignores_ticket_delay_on_c002` (bỏ qua số ngày bịa trong ticket ở cả 5 seeds). |
 
 Lệnh tái lập ma trận Shape C từ thư mục `src/`:
 
