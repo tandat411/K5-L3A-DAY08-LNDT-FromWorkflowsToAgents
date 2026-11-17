@@ -46,4 +46,36 @@ Vai ledger, crash và evaluation: crash suite, benchmark, research card, mục K
 
 ## 6. Tự đánh giá
 
-...
+**Đối chiếu với phần việc được giao (ledger, crash, evaluation)**
+
+| Việc | Kết quả | Bằng chứng |
+| --- | --- | --- |
+| Crash suite | Đạt: 20/20 | `src/reports/crash.json` |
+| Crash trên shape của nhóm | Đạt: 3 điểm crash, gọi lại, gọi lại sau crash, xanh trên cả 4 shape | `tests/test_crash_shapes.py` |
+| Benchmark 4 shape × 5 seed | Đạt: đủ 4 shape, 14 claim, seed 11–55, do công cụ sinh | `src/reports/benchmark.json` |
+| Research card + ablation | Đạt phần chạy được; phần ablation còn nhiễu (xem dưới) | `report/team/research_card.md` |
+| Must-pass trên bộ public | Không trial nào lộ secret hay refund khi thiếu approval; crash 20/20 | ma trận student 283/283 |
+| Tự kiểm trên `student_drop/` | Đạt: 3 shape × 40 claim × 5 seed chạy hết, không lỗi, không `leak_suspect`; chấm bằng nhãn viết tay: 3 shape 1.000 / 1.000, swarm 0.970 / 0.850 | `src/reports/hidden_selfcheck.json`, `src/scripts/doi_chieu_hidden.py`, `src/reports/hidden_doi_chieu.json` |
+
+**Làm được tốt**
+
+- Hiểu rõ ba ranh giới của bài: tiền do `compute_compensation` tính, ticket là dữ liệu chứ không phải lệnh, chỉ host được ghi refund qua `durability.issue_refund` với quote đầy đủ. Đã biến ba ý này thành test (`test_ticket_is_data.py`) thay vì chỉ ghi trong báo cáo.
+- Phát hiện crash suite chính thức chỉ kiểm host và swarm, nên viết thêm test crash cho từng shape. Khi một test đỏ, đã đọc `durability.issue_refund` để tìm nguyên nhân (host trả `idempotent_replay` trước mọi điểm crash) rồi sửa test cho đúng hành vi, không sửa cho test xanh.
+- Số liệu trong ADR, research card và báo cáo nhóm đều lấy từ file report do công cụ sinh ra, có run id kèm theo.
+
+**Chưa tốt và lý do**
+
+- Phần lớn code ba shape và test được viết cùng trợ lý AI (Claude Code). Tôi kiểm bằng cách chạy test, đọc trace và đối chiếu với luật nghiệp vụ, nhưng mức hiểu từng dòng code của single và orchestrator chưa sâu bằng phần crash và evaluation do tôi phụ trách.
+- Code ba shape đều commit dưới tên tôi, nên lịch sử git chưa phản ánh đúng phân công ban đầu (workflow — Đạt, single — Ngọc, orchestrator — Lam). Các bạn bổ sung đóng góp bằng commit test của mình.
+- Ablation trong research card (swarm so với orchestrator) thay đổi hơn một biến: ngoài bước tin ticket, hai shape còn khác số lần gọi model. Chênh pass rate quy được cho bước kiểm chứng; chênh cost thì không. Lẽ ra nên dựng một biến thể chỉ khác đúng một yếu tố.
+- Bộ `student_drop/` không có nhãn, nên kết luận "không claim nào sai" dựa trên nhãn tôi tự gán theo luật nghiệp vụ; số chính thức chỉ có trên 14 claim public, nơi cả ba shape của nhóm đều đạt 1.000.
+- Push lên GitHub bị chặn vì tài khoản bị khoá (HTTP 403), làm chậm việc nộp; nên kiểm quyền push ngay từ CP1.
+
+**Rút ra**
+
+- Với task tuần tự, có luật rõ và dữ liệu có cấu trúc, kiến trúc ít tự chủ nhất (workflow) đạt cùng độ đúng mà rẻ nhất: cost/success 28.48 so với 39.79 (single), 47.91 (orchestrator), 49.57 (swarm).
+- Checkpoint một mình không chống ghi trùng được (demo `buggy_workflow` ra 2 dòng refund); phải có ledger với khoá idempotency trong cùng transaction.
+- Trace là ranh giới bảo mật: chỉ ghi dữ liệu đã qua allowlist, không ghi nguyên văn ticket.
+- Metric phải đọc kèm định nghĩa: cột steps đếm số event trong trace, nên phụ thuộc cách mỗi shape ghi trace chứ không đo khối lượng việc.
+
+**Tự chấm phần việc của mình:** hoàn thành phần ledger, crash, evaluation và tự kiểm trên `student_drop/`; còn thiếu một ablation chỉ đổi đúng một biến.

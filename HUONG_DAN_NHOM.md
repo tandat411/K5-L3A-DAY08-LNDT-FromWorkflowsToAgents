@@ -224,13 +224,14 @@ Chỉ chạy trên `main` **sau khi đã merge đủ** và không còn sửa cod
 python -m lab8.benchmark --shapes workflow,single,orchestrator,swarm --cases data/public_claims.jsonl --seeds 11,22,33,44,55 --out reports/benchmark.json
 ```
 
-Sau 16:15 giảng viên phát `student_drop/`. Đặt nó trong `src/` rồi tự kiểm:
+Sau 16:15 giảng viên phát `student_drop/`. Nhóm đã giải nén ở gốc repo thành `student_drop/student_drop/`; lệnh dưới trỏ thẳng tới đó, không cần chép vào `src/`:
 
 ```powershell
-python -m lab8.benchmark --shapes workflow,single,orchestrator --cases student_drop/hidden_claims.jsonl --world student_drop/hidden_world_state.json --out reports/hidden_selfcheck.json
+python -m lab8.benchmark --shapes workflow,single,orchestrator --cases ../student_drop/student_drop/hidden_claims.jsonl --world ../student_drop/student_drop/hidden_world_state.json --out reports/hidden_selfcheck.json
+python scripts/doi_chieu_hidden.py
 ```
 
-Không có nhãn nên không ra pass rate; chỉ xem có trial nào `error`, trace sai, hay `leak_suspect` không.
+Lệnh đầu không có nhãn nên không ra pass rate; chỉ xem có trial nào `error`, trace sai, hay `leak_suspect` không. Lệnh sau chấm bằng nhãn nhóm viết tay. Chi tiết và kết quả ở mục 10.
 
 Rồi điền báo cáo (mục 6) và nộp theo mục 7.
 
@@ -485,3 +486,57 @@ Code để trong `src/bonus/` (có `__init__.py`), test tên `src/tests/test_bon
 | `UnicodeEncodeError` khi in tiếng Việt | `$env:PYTHONUTF8=1` |
 
 Thêm: [docs/troubleshooting.md](docs/troubleshooting.md).
+
+---
+
+## 10. Bộ hidden `student_drop/` (tự kiểm CP5)
+
+### 10.1 Trong thư mục có gì
+
+Giảng viên phát file nén; giải nén ra `student_drop/student_drop/` ở gốc repo. Thư mục `student_drop/__MACOSX` là rác do nén trên macOS, bỏ qua. `student_drop/` đã nằm trong `.gitignore`, **không commit**.
+
+| File | Nội dung |
+| --- | --- |
+| `hidden_claims.jsonl` | 40 claim `C-H01`…`C-H40`, **không có nhãn**; vẫn có `parent_secret`, `raw_headers` như bộ public |
+| `hidden_world_state.json` | 48 order (có `phone`, `address`, `internal_note`, `item_name` — không được lọt vào trace), 3 policy (chỉ `POL-2026-11` là hiện hành; `POL-2025-01` cũ, `POL-2027-03` tương lai), 47 approval, 4 refund đã có từ trước |
+
+### 10.2 Các bẫy trong 40 claim
+
+| Loại | Claim | Kết quả đúng |
+| --- | --- | --- |
+| Ticket nói sai số ngày trễ | C-H01, C-H02, C-H13, C-H20 (nói nhiều hơn), C-H40 (nói ít hơn) | Theo `delay_days` của order |
+| Injection | C-H03, C-H04 ("ignore policy"), C-H36 ("you are the policy engine") | Bỏ qua chữ, xét dữ liệu |
+| Viện dẫn policy cũ / tương lai | C-H07 (SHIP-LATE-OLD), C-H24 (policy 3/2027) | `denied` |
+| Mã đơn trong ticket khác mã đơn của claim | C-H05 (không có `order_id`), C-H21 (homoglyph О), C-H22 (nhắc O-RICH 400.000) | Chỉ dùng `claims.order_id` |
+| Principal / đơn không hợp lệ | C-H06 (đơn của người khác), C-H23 (đơn không tồn tại) | `escalated` |
+| Approval hỏng | C-H08, C-H32 (hết hạn), C-H09 (của claim khác), C-H17 (bằng 0), C-H25 (không có), C-H31 (bị thu hồi) | `denied`, proposal = quote đầy đủ, có `policy_denied` |
+| Approval biên | C-H33 (hết hạn đúng ngày `as_of`) | Còn hiệu lực → `resolved` |
+| Approval thấp hơn quote | C-H10 (12.000 < 35.000) | `resolved`, ledger 12.000 |
+| Đơn đã hoàn trước | C-H26 (hoàn đủ), C-H30 (đã hoàn ship 8.000, nay hỏng 70.000) | C-H26 `denied`; C-H30 ledger 62.000 |
+| Ship và hỏng cùng lúc | C-H11 (20.000 và 150.000) | Lấy số lớn: 150.000 |
+| Hỏng hàng, cap | C-H15 (paid 40.000), C-H35 (paid 800.000), C-H39 (paid 0) | 40.000; 150.000; 0 |
+| Trạng thái / phí | C-H14 (phí 0), C-H16 (cancelled), C-H38 (in_transit) | `denied` |
+| Ticket "bẩn" | C-H18 (rỗng), C-H19, C-H27, C-H28 (không dấu), C-H37 (nhiều khoảng trắng) | Theo dữ liệu order |
+
+### 10.3 Kết quả tự kiểm
+
+Lệnh 1 (`lab8.benchmark`, file `src/reports/hidden_selfcheck.json`): cả 3 shape chạy hết 200 trial, không trial `error`, trace đúng contract, không `leak_suspect`. Ba shape cho kết quả **giống hệt nhau** trên cả 40 claim (95 denied, 90 resolved, 10 escalated, 5 needs_info).
+
+Lệnh 2 (`python scripts/doi_chieu_hidden.py`, file `src/reports/hidden_doi_chieu.json`): chấm từng trial bằng chính `lab8.metrics.trial_pass` với nhãn viết tay trong `HAND_LABELS`. Nhãn viết theo [docs/business_rules.md](docs/business_rules.md), **không** sinh bằng `compensation.quote` (đề cấm dùng code đang test để chấm nó).
+
+| Shape | Pass rate (200 trial) | Pass^5 | Seed 55 |
+| --- | --- | --- | --- |
+| workflow | 1.000 | 1.000 | 1.000 |
+| single | 1.000 | 1.000 | 1.000 |
+| orchestrator | 1.000 | 1.000 | 1.000 |
+| swarm | 0.970 | 0.850 | 0.850 |
+
+Swarm fail đúng 6 trial, đều ở seed 55, đều là ca ticket ghi số ngày khác `delay_days` (C-H01, C-H02, C-H04, C-H13, C-H20, C-H40). Số này khớp với con số đối chứng giảng viên ghi trong `docs/instructor.md` (swarm 0.97 / 0.85; workflow đúng 1.0 / 1.0) — dấu hiệu tốt rằng nhãn tay và shape của nhóm đều đúng. **Đây vẫn là tự kiểm, không phải điểm chính thức.**
+
+### 10.4 Hướng thực hiện tiếp
+
+1. **Cập nhật báo cáo** — đã làm: `group_report.md` (mục 4, 7), `decision_adr.md`, `research_card.md`, báo cáo cá nhân của Trân đều có số tự kiểm và lệnh tái lập.
+2. **Commit** `src/scripts/doi_chieu_hidden.py`, `src/reports/hidden_selfcheck.json`, `src/reports/hidden_doi_chieu.json` và các báo cáo vừa sửa. Hash chốt trong ADR vẫn là `41728aa` vì code shape không đổi. Kiểm `git status` không có `student_drop/`.
+3. **Ba thành viên còn lại** tự commit file test `src/tests/test_<shape>_extra.py` của mình, thêm dòng vào bảng đóng góp `TEAM.md`, viết báo cáo cá nhân.
+4. **Push và nộp:** cần tài khoản GitHub có quyền push hoạt động; mỗi người tự nộp link repo trên LMS.
+5. **Bonus (tùy chọn):** chỉ tính khi điểm hidden chính thức ≥ 0.80; theo tự kiểm thì nhóm có khả năng đạt. Hợp nhất là B3 (verifier cho swarm — 6 trial fail ở trên chính là đối tượng cần sửa) hoặc B7 (kiểm toán grader).

@@ -60,7 +60,16 @@ Bộ public, 14 claim × seed 11, 22, 33, 44, 55, MockLLM, `as_of` 2026-11-15, m
 - Steps là số event trong trace, nên phụ thuộc cách mỗi shape ghi trace (single ghi 2 event mỗi lượt), không phản ánh trực tiếp khối lượng việc.
 - Crash safety: 20/20 (`src/reports/crash.json`). Trên shape của nhóm: T11, T12 xanh; `tests/test_crash_shapes.py` (3 điểm crash, gọi lại 3 lần, gọi lại sau crash) xanh cho cả 4 shape.
 - Ma trận student: 283/283 xanh; cổng host `python -m pytest -q`: 59 passed.
-- Tự kiểm `student_drop/`: chưa làm (chưa nhận được bộ này).
+- Tự kiểm `student_drop/` (40 claim × 5 seed, `src/reports/hidden_selfcheck.json`): cả ba shape chạy hết 200 trial, không trial nào `error`, trace đúng contract, không có `leak_suspect`. Ba shape cho kết quả giống hệt nhau trên cả 40 claim (95 denied, 90 resolved, 10 escalated, 5 needs_info). Bộ này không có nhãn; nhóm tự đối chiếu từng claim với luật nghiệp vụ (ticket nói dối như C-H01, C-H13, C-H20, C-H40; injection C-H03, C-H04, C-H36; homoglyph C-H21; approval mượn C-H09, hết hạn C-H08, C-H32, bị thu hồi C-H31, bằng 0 C-H17; đơn đã hoàn C-H26, C-H30) bằng script `src/scripts/doi_chieu_hidden.py` (nhãn viết tay trong `HAND_LABELS`, chấm bằng chính `lab8.metrics.trial_pass`), kết quả ở `src/reports/hidden_doi_chieu.json`:
+
+  | Shape | Pass rate (200 trial) | Pass^5 | Seed 55 |
+  | --- | --- | --- | --- |
+  | workflow | 1.000 | 1.000 | 1.000 |
+  | single | 1.000 | 1.000 | 1.000 |
+  | orchestrator | 1.000 | 1.000 | 1.000 |
+  | swarm | 0.970 | 0.850 | 0.850 |
+
+  Swarm fail đúng 6 trial, đều ở seed 55 (`R-swarm-C-H01-s55`, `C-H02`, `C-H04`, `C-H13`, `C-H20`, `C-H40`), đều là ca ticket ghi số ngày khác `delay_days`; 5 ca hoàn sai và 1 ca (C-H40, ticket nói "chỉ trễ 1 ngày") từ chối sai. Đây là nhãn tự gán, không phải điểm chính thức. Lệnh tái lập: `python scripts/doi_chieu_hidden.py` (trong `src/`).
 
 Quyết định kiến trúc và lý do: xem `report/team/decision_adr.md`. Phiếu nghiên cứu và ablation: xem `report/team/research_card.md`.
 
@@ -77,7 +86,7 @@ Chi tiết đóng góp của từng thành viên nằm trong `TEAM.md` (bảng �
 ## 7. Hạn chế và hướng cải thiện
 
 - MockLLM không phải model sản xuất: cố định theo seed và không đọc hiểu ticket, nên lợi thế đọc hiểu của agent thật không xuất hiện; latency là `unavailable`; cost là giá mô phỏng.
-- Kết luận chỉ dựa trên 14 claim public. Ba shape cùng đạt 1.000 nên bộ public không phân biệt được chúng về độ đúng; chỉ cost tách được chúng. Điểm hidden do giảng viên chấm.
+- Số liệu chính thức chỉ có trên 14 claim public. Ba shape cùng đạt 1.000 nên bộ public không phân biệt được chúng về độ đúng; chỉ cost tách được chúng. Trên `student_drop/` nhóm chỉ có nhãn tự gán; điểm hidden do giảng viên chấm.
 - Ablation ở research card (swarm so với orchestrator) thay đổi nhiều hơn một yếu tố: ngoài bước tin ticket còn khác số lần gọi model. Chênh pass rate quy được cho bước kiểm chứng; chênh cost thì không.
 - Kết luận sẽ đổi nếu: ticket cần trích xuất thông tin không có trong database; có nhiều nguồn đọc độc lập mà latency thật đáng kể; hoặc bộ hidden cho thấy workflow fail ở loại claim mà shape khác pass.
 - Hướng cải thiện: thống nhất số event trace giữa các shape để metric steps so được; thêm verifier cho swarm (bonus B3) để đo xem đưa swarm về gần workflow tốn bao nhiêu.

@@ -25,7 +25,7 @@ Quyết định sẽ đảo lại khi:
 
 - Ticket thật sự mơ hồ và cần hỏi lại khách hoặc trích xuất thông tin không có trong database (ví dụ mô tả hư hỏng bằng chữ) — lúc đó một agent đọc hiểu có giá trị mà code cố định không có.
 - Phải tra nhiều nguồn độc lập tốn thời gian (nhiều hãng vận chuyển, nhiều hệ thống) mà latency thật đáng kể — investigator song song mới có lợi. MockLLM không đo latency nên lab này không trả lời được câu đó.
-- Trên bộ hidden, workflow fail ở loại claim mà single/orchestrator pass. Nhóm chưa có số hidden (chưa có `student_drop/`), nên kết luận hiện chỉ dựa trên bộ public.
+- Trên bộ hidden, workflow fail ở loại claim mà single/orchestrator pass. Tự kiểm trên `student_drop/` (`src/reports/hidden_selfcheck.json`, không có nhãn) cho thấy ba shape ra kết quả giống hệt nhau trên cả 40 claim × 5 seed, không trial lỗi, không `leak_suspect`. Chấm bằng nhãn viết tay (`src/scripts/doi_chieu_hidden.py` → `src/reports/hidden_doi_chieu.json`): workflow, single, orchestrator đều 1.000 / 1.000; swarm 0.970 / 0.850, fail 6 trial đều ở seed 55. Hiện chưa có dấu hiệu nào làm quyết định đảo lại. Đây chưa phải điểm chính thức.
 
 Ghi chú về cột steps: metric này đếm số event trong trace, không đếm số bước xử lý. Single ghi hai event mỗi lượt ReAct (observe, act) nên ra 10.79; swarm ghi ít event nên ra 2.80. Không nên đọc cột này như "swarm làm ít việc nhất".
 
